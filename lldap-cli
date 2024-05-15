@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eo pipefail
+
 # LLDAP CLI interface
 
 # Sensible defaults
