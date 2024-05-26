@@ -29,7 +29,7 @@ getConfigValue() {
 
   if echo "$parameter" | grep -q "-"; then
     section=$(echo "$parameter" | cut -d '-' -f 1)
-    option=$(echo "$parameter" | cit -d '-' -f 2)
+    option=$(echo "$parameter" | cut -d '-' -f 2)
   else
     section=general
     option="$parameter"
