@@ -160,13 +160,13 @@ getUsersData() {
   runQuery "$query" "$variables"
 }
 listUsers() {
-  getUsersData | jq -r '(["User ID (user_id)", "Email (mail)", "Display Name (display_name)"] | (., map(length*"-"))), (.data.users[] | [.id, .email, .displayName]) | @tsv' | column -ts $'\t'
+  getUsersData | jq -r '.data.users'
 }
 listUsersId() {
-  getUsersData | jq '.data.users[].id' | tr -d '"'
+  getUsersData | jq -r '.data.users[].id'
 }
 listUsersEmail() {
-  getUsersData | jq '.data.users[].email' | tr -d '"' | sort
+  getUsersData | jq -r '.data.users[].email'
 }
 getUserIdByUserEmail() {
   email="$1"
@@ -182,7 +182,7 @@ listGroupsByUserId() {
   query='query listGroupsByUserId($id:String!){user(userId:$id){groups{displayName}}}'
   variables="{\"id\":\"${id}\"}"
 
-  runQuery "$query" "$variables" | jq '.data.user.groups[].displayName' | tr -d '"'
+  runQuery "$query" "$variables" | jq -r '.data.user.groups[].displayName'
 }
 listUserAttributes() {
   id="$1"
@@ -192,7 +192,7 @@ listUserAttributes() {
 
   list=
   if result="$(runQuery "$query" "$variables")"; then
-    list+="$(echo "$result" | jq '.data.user.attributes[].name' | tr -d '"')"$'\n'
+    list+="$(echo "$result" | jq -r '.data.user.attributes[].name')"$'\n'
     list="$(echo "$list" | head -n-1)"
     list="$(echo "$list" | sort)"
     echo "$list"
@@ -325,7 +325,7 @@ getGroupsData() {
   runQuery "$query" "$variables"
 }
 listGroups() {
-  getGroupsData | jq -r '(["Group ID", "Creation date", "UUID", "Display Name"] | (., map(length*"-"))), (.data.groups[] | [.id,  .creationDate, .uuid, .displayName]) | @tsv' | column -ts $'\t'
+  getGroupsData | jq -r '.data.groups'
 }
 getGroupId() {
   name="$1"
@@ -340,7 +340,7 @@ listUserIdsByGroupName() {
   query='query listUsersByGroupName($id:Int!){group:group(groupId:$id){users{id}}}'
   variables="{\"id\":${id}}"
 
-  runQuery "$query" "$variables" | jq '.data.group.users[].id' | tr -d '"'
+  runQuery "$query" "$variables" | jq -r '.data.group.users[].id'
 }
 listUserEmailsByGroupName() {
   name="$1"
@@ -349,7 +349,7 @@ listUserEmailsByGroupName() {
   query='query listUsersByGroupName($id:Int!){group:group(groupId:$id){users{email}}}'
   variables="{\"id\":${id}}"
 
-  runQuery "$query" "$variables" | jq '.data.group.users[].email' | tr -d '"'
+  runQuery "$query" "$variables" | jq -r '.data.group.users[].email'
 }
 listGroupAttributes() {
   id="$1"
@@ -509,10 +509,10 @@ schemaGetUserAttributeData() {
   fi
 }
 schemaListUserAttributes() {
-  schemaGetUserAttributeData | jq -r '(["Name", "Type", "Is list", "Is visible", "Is editable"] | (., map(length*"-"))), (.data.schema.userSchema.attributes[] | [.name, .attributeType, .isList, .isVisible, .isEditable]) | @tsv' | column -ts $'\t'
+  schemaGetUserAttributeData | jq -r '(["Name", "Type", "Is list", "Is visible", "Is editable"] | (., map(length*"-"))), (.data.schema.userSchema.attributes[] | [.name, .attributeType, .isList, .isVisible, .isEditable])'
 }
 schemaListUserAttributesName() {
-  schemaGetUserAttributeData | jq '.data.schema.userSchema.attributes[].name' | tr -d '"'
+  schemaGetUserAttributeData | jq -r '.data.schema.userSchema.attributes[].name'
 }
 schemaGetUserAttributeType() {
   name="$1"
@@ -567,7 +567,7 @@ schemaGetGroupAttributeData() {
   fi
 }
 schemaListGroupAttributes() {
-  schemaGetGroupAttributeData "$1" | jq -r '(["Name", "Type", "Is list", "Is visible", "Is editable"] | (., map(length*"-"))), (.data.schema.groupSchema.attributes[] | [.name, .attributeType, .isList, .isVisible, .isEditable]) | @tsv' | column -ts $'\t'
+  schemaGetGroupAttributeData "$1" | jq -r '(["Name", "Type", "Is list", "Is visible", "Is editable"] | (., map(length*"-"))), (.data.schema.groupSchema.attributes[] | [.name, .attributeType, .isList, .isVisible, .isEditable])'
 }
 schemaGetGroupAttributeType() {
   name="$1"
@@ -999,6 +999,7 @@ case "$1" in
         listField="$2"
         [ -z "$listField" ] && listField=uid
         case "$listField" in
+          all) listUsers ;;
           uid) listUsersId ;;
           email) listUsersEmail ;;
           *) logout; usage; exit 1 ;;
